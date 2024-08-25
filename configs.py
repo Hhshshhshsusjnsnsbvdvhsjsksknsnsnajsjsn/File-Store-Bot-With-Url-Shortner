@@ -3,7 +3,7 @@ import os
 class Config(object):
   API_ID = int(os.environ.get("API_ID", "9619481"))
   API_HASH = os.environ.get("API_HASH", "10effb30531c66d27b90f1e07f6bd071")
-  BOT_TOKEN = os.environ.get("BOT_TOKEN", "6423120715:AAFDmX4vqy3RllzqTExVBukQf0w2T_7MkoA")
+  BOT_TOKEN = os.environ.get("BOT_TOKEN", "6423120715:")
   BOT_USERNAME = os.environ.get("BOT_USERNAME", "Fgggffd_bot")
   DB_CHANNEL = int(os.environ.get("DB_CHANNEL", "-1002036697162"))
   SHORTLINK_URL = os.environ.get('SHORTLINK_URL', "api.shareus.io")

@@ -3,7 +3,7 @@ import os
 class Config(object):
   API_ID = int(os.environ.get("API_ID", "29534418"))
   API_HASH = os.environ.get("API_HASH", "5f15dd792990ade40a43ae17413b422f")
-  BOT_TOKEN = os.environ.get("BOT_TOKEN", "6423120715:AAFDmX4vqy3RllzqTExVBukQf0w2T_7MkoA")
+  BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
   BOT_USERNAME = os.environ.get("BOT_USERNAME", "Fgggffd_bot")
   DB_CHANNEL = int(os.environ.get("DB_CHANNEL", "-1002036697162"))
   SHORTLINK_URL = os.environ.get('SHORTLINK_URL', "api.shareus.io")
@@ -39,8 +39,5 @@ This is a Permanent 𝙥𝙧𝙞𝙫𝙖𝙩𝙚 𝘽𝙤𝙩.
 [dev](https://t.me/0)
 """
   HOME_TEXT = """
-Hello, [{}](tg://user?id={})\n\nThis is a Permanent **FileStore Bot**.
-
-This is a Permanent 𝙥𝙧𝙞𝙫𝙖𝙩𝙚 𝘽𝙤𝙩. 
-𝙳𝚘 𝙽𝚘𝚝 𝚄𝚜𝚎 𝚝𝚑𝚒𝚜 𝙱𝚘𝚝, 𝙸𝚏 𝚢𝚘𝚞 𝚄𝚜𝚎 𝚝𝚑𝚒𝚜 𝙱𝚘𝚝 𝚢𝚘𝚞 𝚠𝚒𝚕𝚕 𝙱𝚎 𝙱𝚊𝚗𝚗𝚎𝚍 𝙱𝚎𝚌𝚊𝚞𝚜𝚎 𝚝𝚑𝚒𝚜 𝚒𝚜 𝚊 𝙿𝚛𝚒𝚟𝚊𝚝𝚎 𝙱𝚘𝚝 , 𝚗𝚘𝚝 𝚊 𝚙𝚞𝚋𝚕𝚒𝚌 𝙱𝚘𝚝. About Bot. **About Bot**.
+Hello, [{}](tg://user?id={})\n\nHi... This is a Permanent FileStore Bot for @qtmovie.
 """

@@ -28,11 +28,15 @@ async def media_forward(bot: Client, user_id: int, file_id: int):
 
 async def send_media_and_reply(bot: Client, user_id: int, file_ids: list[int]):
     """
-    Send multiple media files and attach a reply to the last one.
+    Sends media files to a user and replies to the last media.
     """
+    # Ensure file_ids is a list
+    if not isinstance(file_ids, list):
+        file_ids = [file_ids]
+
     last_sent_message = None
 
-    # Forward each media file
+    # Forward all media files
     for file_id in file_ids:
         sent_message = await media_forward(bot, user_id, file_id)
         if isinstance(sent_message, Message):
@@ -48,7 +52,7 @@ async def send_media_and_reply(bot: Client, user_id: int, file_ids: list[int]):
 
 async def delete_after_delay(message: Message, delay: int):
     """
-    Delete a message after a delay.
+    Deletes a message after a delay.
     """
     await asyncio.sleep(delay)
     try:

@@ -4,24 +4,23 @@ from pyrogram.types import Message
 from pyrogram.errors import FloodWait
 from configs import Config
 
-async def send_reply(bot: Client, user_id: int):
+async def reply_forward(message: Message):
     """
-    Sends the reply text after all media files have been forwarded.
+    Sends a reply message and informs about the 30-minute deletion policy.
     """
     try:
-        reply_message = await bot.send_message(
-            chat_id=user_id,
-            text="Files will be deleted in 30 minutes to avoid copyright issues. Please forward and save them.",
-            disable_web_page_preview=True
+        await message.reply_text(
+            "Files will be deleted in 30 minutes to avoid copyright issues. Please forward and save them.",
+            disable_web_page_preview=True,
+            quote=True
         )
-        return reply_message
     except FloodWait as e:
-        await asyncio.sleep(e.value)
-        return await send_reply(bot, user_id)
+        await asyncio.sleep(e.x)
+        await reply_forward(message)
 
 async def media_forward(bot: Client, user_id: int, file_id: int):
     """
-    Forwards or copies a single media file.
+    Forwards or copies a media message to a user.
     """
     try:
         if Config.FORWARD_AS_COPY:
@@ -34,27 +33,27 @@ async def media_forward(bot: Client, user_id: int, file_id: int):
 
 async def send_media_and_reply(bot: Client, user_id: int, file_ids: list[int]):
     """
-    Sends all media files first, then sends a single reply text. Schedules deletion for all.
+    Forwards all media files, sends a reply to the last media, and schedules both for deletion after 30 minutes.
     """
-    messages_to_delete = []
+    last_sent_message = None  # To track the last forwarded message
 
-    # Forward all media files
+    # Forward the media files
     for file_id in file_ids:
         sent_message = await media_forward(bot, user_id, file_id)
         if isinstance(sent_message, Message):
-            messages_to_delete.append(sent_message)
+            last_sent_message = sent_message  # Keep track of the last sent message
 
-    # Send the reply text after all media are forwarded
-    reply_message = await send_reply(bot, user_id)
-    messages_to_delete.append(reply_message)
+    # Send reply to the last forwarded message
+    if last_sent_message:
+        await reply_forward(message=last_sent_message)
 
-    # Schedule all messages for deletion
-    for message in messages_to_delete:
-        asyncio.create_task(delete_after_delay(message, 1800))
+    # Schedule both the media and the reply for deletion after 30 minutes
+    if last_sent_message:
+        asyncio.create_task(delete_after_delay(last_sent_message, 1800))
 
 async def delete_after_delay(message: Message, delay: int):
     """
-    Deletes a message after the specified delay.
+    Deletes a message after a specified delay (in seconds).
     """
     await asyncio.sleep(delay)
     try:

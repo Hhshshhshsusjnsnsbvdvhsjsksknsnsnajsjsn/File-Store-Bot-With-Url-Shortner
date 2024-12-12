@@ -4,9 +4,6 @@ from pyrogram.types import Message
 from pyrogram.errors import FloodWait
 from configs import Config
 
-# Track if reply text has been sent
-REPLY_SENT = set()
-
 async def reply_forward(message: Message):
     try:
         reply_message = await message.reply_text(
@@ -29,20 +26,22 @@ async def media_forward(bot: Client, user_id: int, file_id: int):
         await asyncio.sleep(e.value)
         return await media_forward(bot, user_id, file_id)
 
-async def send_media_and_reply(bot: Client, user_id: int, file_id: int):
-    # Send media
-    sent_message = await media_forward(bot, user_id, file_id)
-    if isinstance(sent_message, Message):
-        # Check if reply text has already been sent for this user
-        if user_id not in REPLY_SENT:
-            # Send reply text and mark as sent
-            reply_message = await reply_forward(message=sent_message)
-            REPLY_SENT.add(user_id)
-            # Schedule the reply for deletion
-            asyncio.create_task(delete_after_delay(reply_message, 10))
+async def send_media_and_reply(bot: Client, user_id: int, file_ids: list[int]):
+    last_sent_message = None
 
-        # Schedule the media message for deletion
-        asyncio.create_task(delete_after_delay(sent_message, 18))
+    # Forward all media
+    for file_id in file_ids:
+        sent_message = await media_forward(bot, user_id, file_id)
+        if isinstance(sent_message, Message):
+            last_sent_message = sent_message
+            # Schedule each media for deletion
+            asyncio.create_task(delete_after_delay(sent_message, 10))
+
+    # Reply to the last media after all are sent
+    if last_sent_message:
+        reply_message = await reply_forward(message=last_sent_message)
+        # Schedule the reply for deletion
+        asyncio.create_task(delete_after_delay(reply_message, 18))
 
 async def delete_after_delay(message: Message, delay: int):
     await asyncio.sleep(delay)

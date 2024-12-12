@@ -39,10 +39,10 @@ async def send_media_and_reply(bot: Client, user_id: int, file_id: int):
             reply_message = await reply_forward(message=sent_message)
             REPLY_SENT.add(user_id)
             # Schedule the reply for deletion
-            asyncio.create_task(delete_after_delay(reply_message, 1800))
+            asyncio.create_task(delete_after_delay(reply_message, 10))
 
         # Schedule the media message for deletion
-        asyncio.create_task(delete_after_delay(sent_message, 1800))
+        asyncio.create_task(delete_after_delay(sent_message, 18))
 
 async def delete_after_delay(message: Message, delay: int):
     await asyncio.sleep(delay)

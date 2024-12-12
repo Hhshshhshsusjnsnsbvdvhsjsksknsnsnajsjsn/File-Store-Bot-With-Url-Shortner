@@ -27,23 +27,29 @@ async def media_forward(bot: Client, user_id: int, file_id: int):
         return await media_forward(bot, user_id, file_id)
 
 async def send_media_and_reply(bot: Client, user_id: int, file_ids: list[int]):
+    """
+    Send multiple media files and attach a reply to the last one.
+    """
     last_sent_message = None
 
-    # Forward all media
+    # Forward each media file
     for file_id in file_ids:
         sent_message = await media_forward(bot, user_id, file_id)
         if isinstance(sent_message, Message):
             last_sent_message = sent_message
             # Schedule each media for deletion
-            asyncio.create_task(delete_after_delay(sent_message, 10))
+            asyncio.create_task(delete_after_delay(sent_message, 1800))
 
-    # Reply to the last media after all are sent
+    # Send reply to the last media
     if last_sent_message:
         reply_message = await reply_forward(message=last_sent_message)
         # Schedule the reply for deletion
-        asyncio.create_task(delete_after_delay(reply_message, 18))
+        asyncio.create_task(delete_after_delay(reply_message, 1800))
 
 async def delete_after_delay(message: Message, delay: int):
+    """
+    Delete a message after a delay.
+    """
     await asyncio.sleep(delay)
     try:
         await message.delete()

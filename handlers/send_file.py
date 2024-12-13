@@ -63,4 +63,18 @@ async def send_media_and_reply(bot: Client, user_id: int, file_id: int, is_last:
 
     if is_last:
         await send_direct_message(bot, user_id)
-        asyncio.create_task(delete_after_delay(bot, user_id, s
+        asyncio.create_task(delete_after_delay(bot, user_id, sent_messages, 10))
+
+
+async def delete_after_delay(bot: Client, chat_id: int, message_ids: list, delay: int):
+    """Deletes messages after a specified delay."""
+    await asyncio.sleep(delay)
+
+    try:
+        if message_ids:
+            await bot.delete_messages(chat_id=chat_id, message_ids=message_ids)
+            logger.info(f"Deleted messages: {message_ids}")
+        else:
+            logger.info("No messages to delete.")
+    except Exception as e:
+        logger.error(f"Failed to delete messages: {e}")

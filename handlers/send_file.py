@@ -1,50 +1,66 @@
 import asyncio
-from configs import Config
+import logging
 from pyrogram import Client
-from pyrogram.types import Message
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.errors import FloodWait
+from configs import Config
 
-# Variable to store the last sent message
-last_sent_message = None
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-async def reply_forward():
-    global last_sent_message
-    if last_sent_message is not None:
-        try:
-            await last_sent_message.reply_text(
-                f"Files will be deleted in 30 minutes to avoid copyright issues. Please forward and save them.",
-                disable_web_page_preview=True,
-                quote=True
-            )
-        except FloodWait as e:
-            await asyncio.sleep(e.x)
-            await reply_forward()  # Retry if FloodWait occurs
-        except Exception as e:
-            print(f"Error while sending reply: {e}")  # Catch all other exceptions
+sent_messages = []
+
+
+async def send_direct_message(bot: Client, user_id: int):
+    """Sends a direct message with an inline button."""
+    try:
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💯 Earning Money 🤑", url="https://t.me/+MxH5jcG5cek5OWNl")]
+        ])
+        await bot.send_message(
+            chat_id=user_id,
+            text=(
+                "🎬 𝙁𝙞𝙡𝙚𝙨 𝙬𝙞𝙡𝙡 𝙗𝙚 𝙙𝙚𝙡𝙚𝙩𝙚𝙙 𝙞𝙣 1 𝙢𝙞𝙣𝙪𝙩𝙚 𝙩𝙤 𝙖𝙫𝙤𝙞𝙙 𝙘𝙤𝙥𝙮𝙧𝙞𝙜𝙝𝙩 𝙞𝙨𝙨𝙪𝙚𝙨..\n"
+                "<b>Best Colour Tranding Platform for Fast deposit and Withdrawl Since 5 Year old ☠️</b>"
+            ),
+            reply_markup=keyboard,
+            disable_web_page_preview=True
+        )
+    except FloodWait as e:
+        logger.warning(f"FloodWait encountered: sleeping for {e.x} seconds.")
+        await asyncio.sleep(e.x)
+        await send_direct_message(bot, user_id)
+    except Exception as e:
+        logger.error(f"Error sending direct message: {e}")
+
 
 async def media_forward(bot: Client, user_id: int, file_id: int):
-    global last_sent_message  # Declare it as global to modify
+    """Forwards or copies a message to the user."""
     try:
-        if Config.FORWARD_AS_COPY is True:
-            last_sent_message = await bot.copy_message(chat_id=user_id, from_chat_id=Config.DB_CHANNEL, message_id=file_id)
-        elif Config.FORWARD_AS_COPY is False:
-            last_sent_message = await bot.forward_messages(chat_id=user_id, from_chat_id=Config.DB_CHANNEL, message_ids=file_id)
+        if Config.FORWARD_AS_COPY:
+            sent_message = await bot.copy_message(chat_id=user_id, from_chat_id=Config.DB_CHANNEL, message_id=file_id)
+        else:
+            sent_message = await bot.forward_messages(chat_id=user_id, from_chat_id=Config.DB_CHANNEL, message_ids=file_id)
+
+        return sent_message
     except FloodWait as e:
-        await asyncio.sleep(e.value)
+        logger.warning(f"FloodWait during forwarding: sleeping for {e.x} seconds.")
+        await asyncio.sleep(e.x)
         return await media_forward(bot, user_id, file_id)
+    except Exception as e:
+        logger.error(f"Error in media_forward: {e}")
+        return None
 
-async def send_media_and_reply(bot: Client, user_id: int, file_ids: list):
-    # Send all files
-    for file_id in file_ids:
-        await media_forward(bot, user_id, file_id)
 
-    # Send reply text to the last sent message
-    await reply_forward()
+async def send_media_and_reply(bot: Client, user_id: int, file_id: int, is_last: bool = False):
+    """Sends media to a user and replies with a direct message."""
+    global sent_messages
+    sent_message = await media_forward(bot, user_id, file_id)
 
-    # Schedule deletion of the last sent message
-    if last_sent_message:
-        asyncio.create_task(delete_after_delay(last_sent_message, 1800))
+    if sent_message:
+        sent_messages.append(sent_message.id)
 
-async def delete_after_delay(message: Message, delay: int):
-    await asyncio.sleep(delay)
-    await message.delete()
+    if is_last:
+        await send_direct_message(bot, user_id)
+        asyncio.create_task(delete_after_delay(bot, user_id, s

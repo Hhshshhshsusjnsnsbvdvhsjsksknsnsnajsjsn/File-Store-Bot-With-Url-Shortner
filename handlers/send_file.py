@@ -30,8 +30,7 @@ async def media_forward(bot: Client, user_id: int, file_id: int):
         return await media_forward(bot, user_id, file_id)
 
 async def send_media_and_reply(bot: Client, user_id: int, file_id: int):
-    # Forward all media messages first
-    sent_messages = []
+    # Forward all media messages firs
         sent_message = await media_forward(bot, user_id, file_id)
         sent_messages.append(sent_message)
 

@@ -29,14 +29,13 @@ async def media_forward(bot: Client, user_id: int, file_id: int):
         await asyncio.sleep(e.value)
         return await media_forward(bot, user_id, file_id)
 
-async def send_media_and_reply(bot: Client, user_id: int, file_id: int):
-    # Forward the media message
-    sent_message = await media_forward(bot, user_id, file_id)
+async def send_media_and_reply(bot: Client, user_id: int, file_ids: list[int]):
+    # Forward all media messages
+    for file_id in file_ids:
+        sent_message = await media_forward(bot, user_id, file_id)
+        asyncio.create_task(delete_after_delay(sent_message, 1800))  # Schedule deletion for each media message
 
-    # Schedule deletion for the forwarded media
-    asyncio.create_task(delete_after_delay(sent_message, 1800))
-
-    # Wait 5 seconds before sending the reply text
+    # Wait 5 seconds and send the reply text only once
     await asyncio.sleep(5)
     await send_reply_text(bot, user_id)
 

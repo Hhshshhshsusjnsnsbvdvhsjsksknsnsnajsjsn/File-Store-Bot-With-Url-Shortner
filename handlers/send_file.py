@@ -1,56 +1,42 @@
 import asyncio
 from pyrogram import Client
+from pyrogram.types import Message
 from pyrogram.errors import FloodWait
 from configs import Config
 
-async def send_file(bot: Client, user_id: int, file_ids: list):
-    """
-    Sends multiple files to the user, then sends a final message indicating deletion.
-    """
+async def reply_forward(message: Message, file_id: int):
     try:
-        sent_messages = []  # Track all sent messages
-
-        # Send each file
-        for file_id in file_ids:
-            if Config.FORWARD_AS_COPY:
-                sent_message = await bot.copy_message(
-                    chat_id=user_id,
-                    from_chat_id=Config.DB_CHANNEL,
-                    message_id=file_id
-                )
-            else:
-                sent_message = await bot.forward_messages(
-                    chat_id=user_id,
-                    from_chat_id=Config.DB_CHANNEL,
-                    message_ids=file_id
-                )
-            sent_messages.append(sent_message)
-
-        # Send the final important message
-        final_message = await bot.send_message(
-            chat_id=user_id,
-            text="✅ All files have been sent successfully.\n\n⚠️ **Note:** These files will be deleted in 30 minutes. Please save them before then.",
-            disable_web_page_preview=True
+        await message.reply_text(
+            f"Files will be deleted in 30 minutes to avoid copyright issues. Please forward and save them.",
+            disable_web_page_preview=True,
+            quote=True
         )
-
-        # Add the final message to the list of messages to delete
-        sent_messages.append(final_message)
-
-        # Schedule deletion of all messages after 30 minutes
-        asyncio.create_task(delete_after_delay(sent_messages, 1800))
-
     except FloodWait as e:
-        # Handle rate limits
-        await asyncio.sleep(e.value)
-        await send_media_and_reply(bot, user_id, file_ids)
+        await asyncio.sleep(e.x)
+        await reply_forward(message, file_id)
 
-async def delete_after_delay(messages: list, delay: int):
-    """
-    Deletes all messages in the list after the specified delay (in seconds).
-    """
+async def media_forward(bot: Client, user_id: int, file_id: int):
+    try:
+        if Config.FORWARD_AS_COPY:
+            return await bot.copy_message(chat_id=user_id, from_chat_id=Config.DB_CHANNEL,
+                                          message_id=file_id)
+        else:
+            return await bot.forward_messages(chat_id=user_id, from_chat_id=Config.DB_CHANNEL,
+                                              message_ids=file_id)
+    except FloodWait as e:
+        await asyncio.sleep(e.x)
+        return await media_forward(bot, user_id, file_id)
+
+async def send_media_and_reply(bot: Client, user_id: int, file_id: int):
+    # Forward or copy the media message
+    sent_message = await media_forward(bot, user_id, file_id)
+
+    # Schedule the media deletion after 30 minutes
+    asyncio.create_task(delete_after_delay(sent_message, 1800))
+
+    # Send the reply about deletion
+    await reply_forward(message=sent_message, file_id=file_id)
+
+async def delete_after_delay(message: Message, delay: int):
     await asyncio.sleep(delay)
-    for message in messages:
-        try:
-            await message.delete()
-        except Exception as e:
-            print(f"Error deleting message {message.message_id}: {e}")
+    await message.delete()

@@ -1,23 +1,19 @@
 import asyncio
-import requests
-import string
-import random
 from configs import Config
 from pyrogram import Client
-from pyrogram.types import Message
 from pyrogram.errors import FloodWait
-from handlers.helpers import str_to_b64
 
-async def reply_forward(message: Message):
+async def send_reply_text(bot: Client, user_id: int):
     try:
-        await message.reply_text(
-            "Files will be deleted in 30 minutes to avoid copyright issues. Please forward and save them.",
-            disable_web_page_preview=True,
-            quote=True
+        # Send the reply text as a separate message
+        await bot.send_message(
+            chat_id=user_id,
+            text="Files will be deleted in 30 minutes to avoid copyright issues. Please forward and save them.",
+            disable_web_page_preview=True
         )
     except FloodWait as e:
         await asyncio.sleep(e.x)
-        await reply_forward(message)
+        await send_reply_text(bot, user_id)
 
 async def media_forward(bot: Client, user_id: int, file_id: int):
     try:
@@ -29,18 +25,14 @@ async def media_forward(bot: Client, user_id: int, file_id: int):
         await asyncio.sleep(e.x)
         return await media_forward(bot, user_id, file_id)
 
-async def send_media_and_reply(bot: Client, user_id: int, file_id: int):
-    # Forward all media messages firs
+async def send_media_and_reply(bot: Client, user_id: int, file_ids: list[int]):
+    # Forward all media messages first
+    for file_id in file_ids:
         sent_message = await media_forward(bot, user_id, file_id)
-        sent_messages.append(sent_message)
+        asyncio.create_task(delete_after_delay(sent_message, 1800))  # Schedule deletion for each message
 
-    # Reply to the last sent message
-    if sent_messages:
-        await reply_forward(sent_messages[-1])
-
-    # Schedule deletion for all sent messages
-    for message in sent_messages:
-        asyncio.create_task(delete_after_delay(message, 1800))
+    # Send the reply text after all media messages are sent
+    await send_reply_text(bot, user_id)
 
 async def delete_after_delay(message, delay):
     await asyncio.sleep(delay)
